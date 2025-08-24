@@ -1,22 +1,24 @@
 {% extends 'core/base.html' %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h2>Alumnos</h2>
-    <a href="/alumnos/nuevo/" class="btn btn-primary">Agregar Alumno</a>
+<div class="card p-4 shadow-sm mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2 class="mb-0">Alumnos</h2>
+                <a href="/alumnos/nuevo/" class="btn btn-primary">Agregar Alumno</a>
+        </div>
+        <table class="table table-striped table-bordered align-middle">
+                <thead class="table-primary">
+                <tr><th>Nombre</th><th>Grado</th><th>WhatsApp</th><th>Acciones</th></tr>
+                </thead>
+                <tbody>
+                {% for a in alumnos %}
+                <tr>
+                                <td>{{ a.nombre }}</td>
+                                <td>{{ a.grado }}</td>
+                                <td>{{ a.whatsapp }}</td>
+                                <td><a href="/alumnos/{{ a.id }}/editar/" class="btn btn-sm btn-warning">Editar</a></td>
+                </tr>
+                {% endfor %}
+                </tbody>
+        </table>
 </div>
-<table class="table table-striped table-bordered">
-        <thead class="table-primary">
-        <tr><th>Nombre</th><th>Grado</th><th>WhatsApp</th><th>Acciones</th></tr>
-        </thead>
-        <tbody>
-        {% for a in alumnos %}
-        <tr>
-                <td>{{ a.nombre }}</td>
-                <td>{{ a.grado }}</td>
-                <td>{{ a.whatsapp }}</td>
-                <td><a href="/alumnos/{{ a.id }}/editar/" class="btn btn-sm btn-warning">Editar</a></td>
-        </tr>
-        {% endfor %}
-        </tbody>
-</table>
 {% endblock %}

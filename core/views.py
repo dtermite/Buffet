@@ -3,15 +3,72 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse_lazy
 from django.utils import timezone
+from django.db import models
 from decimal import Decimal
 import requests
-from .models import Alumno, Consumo, CuentaCorriente, FormaPago, Pago, Grado
-from .forms import (GradoForm, AlumnoForm, PagoForm, ConsumoForm, FormaPagoForm, 
-                    RegistrarConsumoForm, RegistrarPagoForm)
+import io
+import openpyxl
+from django.http import HttpResponse
 
 # --- HELPERS ---
 def is_admin(user):
     return user.is_superuser or user.groups.filter(name='admin').exists()
+# --- EXPORTAR CUENTAS CORRIENTES A EXCEL ---
+@login_required
+@user_passes_test(is_admin)
+def exportar_cuentas_corrientes_excel(request):
+    alumnos = Alumno.objects.all().order_by('nombre')
+    alumno_id = request.GET.get('alumno')
+    cuentas_qs = CuentaCorriente.objects.select_related('alumno')
+    if alumno_id:
+        cuentas_qs = cuentas_qs.filter(alumno_id=alumno_id)
+    cuentas = cuentas_qs.order_by('alumno__nombre')[:20]
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Cuentas Corrientes"
+    ws.append(["Alumno", "Total Consumos", "Total Pagos", "Saldo"])
+    for cuenta in cuentas:
+        ws.append([
+            cuenta.alumno.nombre,
+            float(cuenta.total_consumido),
+            float(cuenta.total_pagado),
+            float(cuenta.saldo)
+        ])
+    for col in ws.columns:
+        max_length = 0
+        column = col[0].column_letter
+        for cell in col:
+            try:
+                if len(str(cell.value)) > max_length:
+                    max_length = len(str(cell.value))
+            except:
+                pass
+        ws.column_dimensions[column].width = max_length + 2
+    output = io.BytesIO()
+    wb.save(output)
+    output.seek(0)
+    response = HttpResponse(output, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename=cuentas_corrientes.xlsx'
+    return response
+
+# --- CUENTAS CORRIENTES ---
+@login_required
+@user_passes_test(is_admin)
+def cuentas_corrientes(request):
+    alumnos = Alumno.objects.all().order_by('nombre')
+    alumno_id = request.GET.get('alumno')
+    cuentas_qs = CuentaCorriente.objects.select_related('alumno')
+    if alumno_id:
+        cuentas_qs = cuentas_qs.filter(alumno_id=alumno_id)
+    cuentas = cuentas_qs.order_by('alumno__nombre')[:20]
+    return render(request, 'core/cuentas_corrientes.html', {'cuentas': cuentas, 'alumnos': alumnos, 'alumno_id': alumno_id})
+
+from .models import Alumno, Consumo, CuentaCorriente, FormaPago, Pago, Grado
+from .forms import (GradoForm, AlumnoForm, PagoForm, ConsumoForm, FormaPagoForm, 
+                    RegistrarConsumoForm, RegistrarPagoForm)
+
+
 
 # --- GRADOS ---
 @login_required
@@ -217,7 +274,12 @@ def index(request):
                 city = geo_data.get('city')
         except requests.exceptions.RequestException:
             city = None
-    return render(request, 'core/index.html', {'city': city})
+    # Calcular total de deuda general
+    from django.db.models import Sum
+    total_consumos = Consumo.objects.aggregate(s=Sum('importe'))['s'] or 0
+    total_pagos = Pago.objects.aggregate(s=Sum('importe'))['s'] or 0
+    total_deuda = total_consumos - total_pagos
+    return render(request, 'core/index.html', {'city': city, 'total_deuda': total_deuda})
 
 def deuda_alumno(request, alumno_id):
     alumno = get_object_or_404(Alumno, pk=alumno_id)
@@ -226,38 +288,65 @@ def deuda_alumno(request, alumno_id):
     return render(request, "core/deuda_alumno.html", {"alumno": alumno, "cuenta": cuenta, "texto": texto})
 
 def deuda_general(request):
-    cuentas = CuentaCorriente.objects.select_related("alumno")
+    cuentas_con_deuda = CuentaCorriente.objects.annotate(
+        saldo_annotate=models.F('total_consumido') - models.F('total_pagado')
+    ).filter(saldo_annotate__gt=0).select_related('alumno')
+
     deudas = [
         {
             "alumno": c.alumno,
-            "saldo": c.saldo,
-            "texto": f"Hola {c.alumno.nombre}, tu deuda actual en el buffet escolar es de ${c.saldo:.2f}."
-        } for c in cuentas if c.saldo > 0
+            "saldo": c.saldo_annotate,
+            "texto": f"Hola {c.alumno.nombre}, tu deuda actual en el buffet escolar es de ${c.saldo_annotate:.2f}."
+        } for c in cuentas_con_deuda
     ]
     return render(request, "core/deuda_general.html", {"deudas": deudas})
 
 @login_required
 @user_passes_test(is_admin)
 def registrar_consumo(request):
+    from .models import Consumo
+    alumnos = Alumno.objects.all().order_by('nombre')
+    alumno_id = request.GET.get('alumno')
     if request.method == "POST":
-        form = ConsumoForm(request.POST)
+        form = RegistrarConsumoForm(request.POST)
         if form.is_valid():
-            form.save()
+            alumno = form.cleaned_data['alumno']
+            detalle = form.cleaned_data['detalle']
+            importe = form.cleaned_data['importe']
+            now = timezone.now()
+            Consumo.objects.create(
+                fecha=now.date(),
+                hora=now.time(),
+                alumno=alumno,
+                detalle=detalle,
+                importe=importe
+            )
             return redirect("registrar_consumo")
     else:
-        initial = {"fecha": timezone.now().date()}
-        form = ConsumoForm(initial=initial)
-    return render(request, "core/registrar_consumo.html", {"form": form})
+        form = RegistrarConsumoForm()
+    consumos_qs = Consumo.objects.select_related('alumno').order_by('-fecha', '-hora')
+    if alumno_id:
+        consumos_qs = consumos_qs.filter(alumno_id=alumno_id)
+    consumos = consumos_qs[:10]
+    return render(request, "core/registrar_consumo.html", {"form": form, "consumos": consumos, "alumnos": alumnos, "alumno_id": alumno_id})
 
 @login_required
 @user_passes_test(is_admin)
 def registrar_pago(request):
     if request.method == "POST":
-        form = PagoForm(request.POST)
+        form = RegistrarPagoForm(request.POST)
         if form.is_valid():
-            form.save()
+            alumno = form.cleaned_data['alumno']
+            importe = form.cleaned_data['importe']
+            forma_pago = form.cleaned_data['forma_pago']
+
+            Pago.objects.create(
+                alumno=alumno,
+                importe=importe,
+                fecha=timezone.now().date(),
+                forma_pago=forma_pago
+            )
             return redirect("registrar_pago")
     else:
-        initial = {"fecha": timezone.now().date()}
-        form = PagoForm(initial=initial)
+        form = RegistrarPagoForm()
     return render(request, "core/registrar_pago.html", {"form": form})

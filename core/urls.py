@@ -37,4 +37,9 @@ urlpatterns = [
     path('pagos/nuevo/', views.pago_create, name='pago_create'),
     path('pagos/<int:pk>/editar/', views.pago_edit, name='pago_edit'),
     path('pagos/<int:pk>/eliminar/', views.pago_delete, name='pago_delete'),
+
+    # Cuentas Corrientes
+    path('cuentas_corrientes/', views.cuentas_corrientes, name='cuentas_corrientes'),
+    path('cuentas_corrientes/exportar/', views.exportar_cuentas_corrientes_excel, name='exportar_cuentas_corrientes_excel'),
+    path('cuentas_corrientes/exportar_excel/', views.exportar_cuentas_corrientes_excel, name='exportar_cuentas_corrientes_excel_alias'),
 ]

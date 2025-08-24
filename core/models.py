@@ -34,8 +34,22 @@ class Consumo(models.Model):
 
 class CuentaCorriente(models.Model):
     alumno = models.OneToOneField(Alumno, on_delete=models.CASCADE)
+
+
+    # Los campos físicos para mantener la tabla actualizada
     total_consumido = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     total_pagado = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+
+    @property
+    def total_consumido_calc(self):
+        from django.db.models import Sum
+        return Consumo.objects.filter(alumno=self.alumno).aggregate(s=Sum('importe'))['s'] or 0
+
+    @property
+    def total_pagado_calc(self):
+        from django.db.models import Sum
+        return Pago.objects.filter(alumno=self.alumno).aggregate(s=Sum('importe'))['s'] or 0
+
 
     @property
     def saldo(self):
@@ -53,33 +67,26 @@ class Pago(models.Model):
     def __str__(self):
         return f"{self.fecha} - {self.alumno.nombre}: ${self.importe} ({self.forma_pago})"
 
+
+# Signals para mantener la tabla actualizada en tiempo real
 @receiver(post_save, sender=Alumno)
 def crear_cuenta_corriente(sender, instance, created, **kwargs):
     if created:
         CuentaCorriente.objects.create(alumno=instance)
 
-@receiver(post_save, sender=Consumo)
-def actualizar_cuenta_por_consumo(sender, instance, created, **kwargs):
-    if created:
-        cuenta, _ = CuentaCorriente.objects.get_or_create(alumno=instance.alumno)
-        cuenta.total_consumido += instance.importe
-        cuenta.save()
-
-@receiver(post_delete, sender=Consumo)
-def revertir_cuenta_por_consumo(sender, instance, **kwargs):
-    cuenta, _ = CuentaCorriente.objects.get_or_create(alumno=instance.alumno)
-    cuenta.total_consumido -= instance.importe
+def actualizar_cuenta_corriente(alumno):
+    from django.db.models import Sum
+    cuenta, _ = CuentaCorriente.objects.get_or_create(alumno=alumno)
+    cuenta.total_consumido = Consumo.objects.filter(alumno=alumno).aggregate(s=Sum('importe'))['s'] or 0
+    cuenta.total_pagado = Pago.objects.filter(alumno=alumno).aggregate(s=Sum('importe'))['s'] or 0
     cuenta.save()
+
+@receiver(post_save, sender=Consumo)
+@receiver(post_delete, sender=Consumo)
+def consumo_changed(sender, instance, **kwargs):
+    actualizar_cuenta_corriente(instance.alumno)
 
 @receiver(post_save, sender=Pago)
-def actualizar_cuenta_por_pago(sender, instance, created, **kwargs):
-    if created:
-        cuenta, _ = CuentaCorriente.objects.get_or_create(alumno=instance.alumno)
-        cuenta.total_pagado += instance.importe
-        cuenta.save()
-
 @receiver(post_delete, sender=Pago)
-def revertir_cuenta_por_pago(sender, instance, **kwargs):
-    cuenta, _ = CuentaCorriente.objects.get_or_create(alumno=instance.alumno)
-    cuenta.total_pagado -= instance.importe
-    cuenta.save()
+def pago_changed(sender, instance, **kwargs):
+    actualizar_cuenta_corriente(instance.alumno)

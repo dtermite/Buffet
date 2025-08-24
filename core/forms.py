@@ -14,17 +14,54 @@ class AlumnoForm(forms.ModelForm):
             'grado': forms.Select(attrs={'class': 'form-control'}),
         }
 
+
+# NUEVO PagoForm desde cero
+from django.utils import timezone
 class PagoForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        from .models import CuentaCorriente
+        if self.instance and self.instance.pk:
+            # Edición: solo mostrar el alumno actual y deshabilitar el campo
+            self.fields['alumno'].queryset = Alumno.objects.filter(pk=self.instance.alumno.pk)
+            self.fields['alumno'].disabled = True
+        else:
+            alumnos_con_deuda = [c.alumno.pk for c in CuentaCorriente.objects.select_related('alumno') if c.saldo > 0]
+            self.fields['alumno'].queryset = Alumno.objects.filter(pk__in=alumnos_con_deuda).order_by('nombre')
+        self.fields['forma_pago'].queryset = FormaPago.objects.all().order_by('nombre')
+        self.fields['fecha'].initial = timezone.now().date()
+        self.fields['alumno'].widget.attrs.update({'class': 'form-control'})
+        self.fields['forma_pago'].widget.attrs.update({'class': 'form-control'})
+        self.fields['importe'].widget.attrs.update({'class': 'form-control', 'step': '0.01'})
+        self.fields['fecha'].widget.attrs.update({'class': 'form-control', 'type': 'date'})
+
+    def clean(self):
+        cleaned_data = super().clean()
+        alumno = self.instance.alumno if self.instance and self.instance.pk else cleaned_data.get('alumno')
+        importe = cleaned_data.get('importe')
+        if alumno and importe is not None:
+            from .models import CuentaCorriente, Pago
+            cuenta = CuentaCorriente.objects.get(alumno=alumno)
+            deuda = cuenta.saldo
+            if self.instance and self.instance.pk:
+                # Si está editando, sumar el importe anterior a la deuda
+                deuda += self.instance.importe
+            if importe > deuda:
+                self.add_error('importe', f'El importe no puede ser mayor a la deuda (${deuda:.2f})')
+        return cleaned_data
+
     class Meta:
         model = Pago
         fields = ['alumno', 'forma_pago', 'importe', 'fecha']
-        widgets = {
-            'fecha': forms.DateInput(attrs={'type': 'date'}),
-            'alumno': forms.Select(attrs={'class': 'form-control'}),
-            'forma_pago': forms.Select(attrs={'class': 'form-control'}),
-        }
 
 class ConsumoForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['alumno'].queryset = Alumno.objects.all().order_by('nombre')
+        from django.utils import timezone
+        if not self.instance.pk:
+            self.fields['fecha'].initial = timezone.now().date()
+            self.fields['hora'].initial = timezone.now().time().strftime('%H:%M')
     class Meta:
         model = Consumo
         fields = ['fecha', 'hora', 'alumno', 'detalle', 'importe']

@@ -1,27 +1,21 @@
 {% extends 'core/base.html' %}
 {% block content %}
-<h2>{{ accion }}</h2>
-<form method="post" class="card p-4 shadow-sm" style="max-width: 500px; margin:auto;">{% csrf_token %}
-    <div class="mb-3">
-        <label for="nombre" class="form-label">Nombre</label>
-        <input type="text" name="nombre" id="nombre" class="form-control" required value="{{ alumno.nombre|default:'' }}">
-    </div>
-    <div class="mb-3">
-        <label for="grado" class="form-label">Grado</label>
-        <select name="grado" id="grado" class="form-control" required>
-            <option value="">Seleccione un grado</option>
-            {% for grado in grados %}
-                <option value="{{ grado.id }}" {% if alumno.grado.id == grado.id %}selected{% endif %}>{{ grado.nombre }}</option>
-            {% endfor %}
-        </select>
-    </div>
-    <div class="mb-3">
-        <label for="whatsapp" class="form-label">WhatsApp</label>
-        <input type="text" name="whatsapp" id="whatsapp" class="form-control" required value="{{ alumno.whatsapp|default:'' }}">
-    </div>
-    <button type="submit" class="btn btn-success">Guardar</button>
-</form>
-<div class="text-center mt-3">
-    <a href="/alumnos/" class="btn btn-secondary">Volver a la lista</a>
+<div class="card p-4 shadow-sm" style="max-width: 500px; margin:auto;">
+    <h2 class="mb-4 text-center">{{ accion }}</h2>
+    <form method="post" class="row g-3">{% csrf_token %}
+        {% if form.errors %}
+            <div class="alert alert-danger">{{ form.errors }}</div>
+        {% endif %}
+        {% for field in form %}
+        <div class="col-12 row align-items-center mb-2">
+            <label class="col-4 col-form-label text-end" for="{{ field.id_for_label }}">{{ field.label }}</label>
+            <div class="col-8">{{ field }}</div>
+        </div>
+        {% endfor %}
+        <div class="col-12 text-center mt-3">
+            <button type="submit" class="btn btn-success">Guardar</button>
+            <a href="/alumnos/" class="btn btn-secondary ms-2">Volver a la lista</a>
+        </div>
+    </form>
 </div>
 {% endblock %}

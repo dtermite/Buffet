@@ -1,10 +1,23 @@
 {% extends 'core/base.html' %}
 {% block content %}
-<div class="text-center mt-5">
-	<h1 class="fw-bold" style="font-size: 4rem; color: #2c3e50; letter-spacing: 2px; text-shadow: 2px 2px 8px #d1d8e0;">
-		Bienvenidos
-	</h1>
-	<p class="lead mt-4" style="font-size: 1.3rem;">Utilice el menú superior para registrar consumos, pagos o consultar deudas de los alumnos.</p>
-	<a href="/deuda/" class="btn btn-success btn-lg mt-3 shadow">Ver deudas y enviar WhatsApp</a>
+<div class="row justify-content-center mt-5">
+	<div class="col-md-8">
+		<div class="card shadow-sm mb-4">
+			<div class="card-body text-center">
+				<h1 class="fw-bold mb-3" style="font-size: 3rem; color: #2c3e50; letter-spacing: 2px; text-shadow: 2px 2px 8px #d1d8e0;">
+					Bienvenidos
+				</h1>
+				<p class="lead mb-4" style="font-size: 1.3rem;">Utilice el menú superior para registrar consumos, pagos o consultar deudas de los alumnos.</p>
+				<a href="/deuda/" class="btn btn-success btn-lg shadow">Ver deudas y enviar WhatsApp</a>
+			</div>
+		</div>
+		<div class="card shadow-sm bg-warning-subtle border-warning mb-4">
+			<div class="card-body text-center">
+				<h5 class="card-title mb-2"><i class="bi bi-exclamation-circle text-warning"></i> Total de deuda de alumnos</h5>
+				<div class="display-5 fw-bold text-danger">${{ total_deuda|floatformat:2 }}</div>
+				<div class="text-muted" style="font-size:0.95rem;">(Suma de todos los consumos menos todos los pagos)</div>
+			</div>
+		</div>
+	</div>
 </div>
 {% endblock %}

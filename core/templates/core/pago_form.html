@@ -1,35 +1,21 @@
 {% extends 'core/base.html' %}
 {% block content %}
-<h2>{% if pago %}Editar Pago{% else %}Nuevo Pago{% endif %}</h2>
-<form method="post">
-    {% csrf_token %}
-    <div class="mb-3">
-        <label for="alumno" class="form-label">Alumno</label>
-        <select name="alumno" id="alumno" class="form-select" required>
-            <option value="">Seleccione...</option>
-            {% for a in alumnos %}
-            <option value="{{ a.pk }}" {% if pago and pago.alumno.pk == a.pk %}selected{% endif %}>{{ a }}</option>
-            {% endfor %}
-        </select>
-    </div>
-    <div class="mb-3">
-        <label for="forma_pago" class="form-label">Forma de Pago</label>
-        <select name="forma_pago" id="forma_pago" class="form-select" required>
-            <option value="">Seleccione...</option>
-            {% for f in formas_pago %}
-            <option value="{{ f.pk }}" {% if pago and pago.forma_pago.pk == f.pk %}selected{% endif %}>{{ f }}</option>
-            {% endfor %}
-        </select>
-    </div>
-    <div class="mb-3">
-        <label for="importe" class="form-label">Importe</label>
-        <input type="number" step="0.01" name="importe" id="importe" class="form-control" required value="{{ pago.importe|default:'' }}">
-    </div>
-    <div class="mb-3">
-        <label for="fecha" class="form-label">Fecha</label>
-        <input type="date" name="fecha" id="fecha" class="form-control" required value="{{ pago.fecha|default:'' }}">
-    </div>
-    <button type="submit" class="btn btn-primary">Guardar</button>
-    <a href="{% url 'pagos_list' %}" class="btn btn-secondary">Cancelar</a>
-</form>
+<div class="card p-4 shadow-sm" style="max-width: 500px; margin:auto;">
+    <h2 class="mb-4 text-center">Registrar pago</h2>
+    <form method="post" class="row g-3">{% csrf_token %}
+        {% if form.errors %}
+            <div class="alert alert-danger">{{ form.errors }}</div>
+        {% endif %}
+        {% for field in form %}
+        <div class="col-12 row align-items-center mb-2">
+            <label class="col-4 col-form-label text-end" for="{{ field.id_for_label }}">{{ field.label }}</label>
+            <div class="col-8">{{ field }}</div>
+        </div>
+        {% endfor %}
+        <div class="col-12 text-center mt-3">
+            <button type="submit" class="btn btn-success">Registrar</button>
+            <a href="{% url 'pagos_list' %}" class="btn btn-secondary ms-2">Cancelar</a>
+        </div>
+    </form>
+</div>
 {% endblock %}
