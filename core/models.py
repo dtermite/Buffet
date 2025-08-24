@@ -1,4 +1,12 @@
 from django.db import models
+class Parametro(models.Model):
+    mensaje_whatsapp = models.TextField(
+        default="Hola {nombre}, tu deuda actual en el buffet escolar es de ${deuda}."
+    )
+    
+    def __str__(self):
+        return "Parámetros Generales"
+from django.db import models
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 

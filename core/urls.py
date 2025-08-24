@@ -42,4 +42,7 @@ urlpatterns = [
     path('cuentas_corrientes/', views.cuentas_corrientes, name='cuentas_corrientes'),
     path('cuentas_corrientes/exportar/', views.exportar_cuentas_corrientes_excel, name='exportar_cuentas_corrientes_excel'),
     path('cuentas_corrientes/exportar_excel/', views.exportar_cuentas_corrientes_excel, name='exportar_cuentas_corrientes_excel_alias'),
+
+    # Parámetros
+    path('parametros/', views.parametros_edit, name='parametros_edit'),
 ]

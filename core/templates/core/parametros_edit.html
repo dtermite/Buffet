@@ -1,0 +1,15 @@
+{% extends 'core/base.html' %}
+{% block content %}
+<div class="card p-4 shadow-sm" style="max-width:600px;margin:auto;">
+    <h2 class="mb-3">Texto base para WhatsApp</h2>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <div class="alert alert-info">
+            Puedes usar <b>{nombre}</b> para el nombre del alumno y <b>{deuda}</b> para el importe de deuda.<br>
+            Ejemplo: <code>Hola {nombre}, tu deuda actual en el buffet escolar es de ${deuda}.</code>
+        </div>
+        <button type="submit" class="btn btn-primary">Guardar</button>
+    </form>
+</div>
+{% endblock %}

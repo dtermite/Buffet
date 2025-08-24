@@ -1,3 +1,13 @@
+
+# --- MOVE ALL IMPORTS TO TOP ---
+# (already at top, so just re-insert CRUD views after is_admin)
+
+
+# --- GRADOS ---
+
+# (CRUD views for Grado and Pago moved after imports and is_admin)
+
+
 # --- IMPORTS ---
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.shortcuts import render, redirect, get_object_or_404
@@ -9,11 +19,96 @@ import requests
 import io
 import openpyxl
 from django.http import HttpResponse
+from .models import Alumno, Consumo, CuentaCorriente, FormaPago, Pago, Grado, Parametro
+from .forms import (GradoForm, AlumnoForm, PagoForm, ConsumoForm, FormaPagoForm, 
+                    RegistrarConsumoForm, RegistrarPagoForm)
+from .forms_parametro import ParametroForm
 
 # --- HELPERS ---
 def is_admin(user):
     return user.is_superuser or user.groups.filter(name='admin').exists()
-# --- EXPORTAR CUENTAS CORRIENTES A EXCEL ---
+
+@login_required
+@user_passes_test(is_admin)
+def grados_list(request):
+    grados = Grado.objects.all().order_by('nombre')
+    return render(request, 'core/grados_list.html', {'grados': grados})
+
+@login_required
+@user_passes_test(is_admin)
+def grado_create(request):
+    if request.method == 'POST':
+        form = GradoForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('grados_list')
+    else:
+        form = GradoForm()
+    return render(request, 'core/grado_form.html', {'form': form, 'grado': None})
+
+@login_required
+@user_passes_test(is_admin)
+def grado_edit(request, pk):
+    grado = get_object_or_404(Grado, pk=pk)
+    if request.method == 'POST':
+        form = GradoForm(request.POST, instance=grado)
+        if form.is_valid():
+            form.save()
+            return redirect('grados_list')
+    else:
+        form = GradoForm(instance=grado)
+    return render(request, 'core/grado_form.html', {'form': form, 'grado': grado})
+
+@login_required
+@user_passes_test(is_admin)
+def grado_delete(request, pk):
+    grado = get_object_or_404(Grado, pk=pk)
+    if request.method == 'POST':
+        grado.delete()
+        return redirect('grados_list')
+    return render(request, 'core/grado_confirm_delete.html', {'grado': grado})
+
+# --- PAGOS ---
+@login_required
+@user_passes_test(is_admin)
+def pagos_list(request):
+    alumnos = Alumno.objects.all().order_by('nombre')
+    alumno_id = request.GET.get('alumno')
+    pagos = Pago.objects.select_related('alumno', 'forma_pago').order_by('-fecha')
+    if alumno_id:
+        pagos = pagos.filter(alumno_id=alumno_id)
+    return render(request, 'core/pagos_list.html', {'pagos': pagos, 'alumnos': alumnos, 'alumno_id': alumno_id})
+
+@login_required
+@user_passes_test(is_admin)
+def pago_create(request):
+    if request.method == 'POST':
+        form = PagoForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('pagos_list')
+    else:
+        form = PagoForm()
+    return render(request, 'core/pago_form.html', {'form': form, 'pago': None})
+    return user.is_superuser or user.groups.filter(name='admin').exists()
+
+# --- PARÁMETROS ---
+@login_required
+@user_passes_test(is_admin)
+def parametros_edit(request):
+    parametro, _ = Parametro.objects.get_or_create(id=1)
+    if request.method == 'POST':
+        form = ParametroForm(request.POST, instance=parametro)
+        if form.is_valid():
+            form.save()
+            return redirect('parametros_edit')
+    else:
+        form = ParametroForm(instance=parametro)
+    return render(request, 'core/parametros_edit.html', {'form': form})
+
+
+
+ # --- EXPORTAR CUENTAS CORRIENTES A EXCEL ---
 @login_required
 @user_passes_test(is_admin)
 def exportar_cuentas_corrientes_excel(request):
@@ -64,75 +159,7 @@ def cuentas_corrientes(request):
     cuentas = cuentas_qs.order_by('alumno__nombre')[:20]
     return render(request, 'core/cuentas_corrientes.html', {'cuentas': cuentas, 'alumnos': alumnos, 'alumno_id': alumno_id})
 
-from .models import Alumno, Consumo, CuentaCorriente, FormaPago, Pago, Grado
-from .forms import (GradoForm, AlumnoForm, PagoForm, ConsumoForm, FormaPagoForm, 
-                    RegistrarConsumoForm, RegistrarPagoForm)
 
-
-
-# --- GRADOS ---
-@login_required
-@user_passes_test(is_admin)
-def grados_list(request):
-    grados = Grado.objects.all().order_by('nombre')
-    return render(request, 'core/grados_list.html', {'grados': grados})
-
-@login_required
-@user_passes_test(is_admin)
-def grado_create(request):
-    if request.method == 'POST':
-        form = GradoForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect('grados_list')
-    else:
-        form = GradoForm()
-    return render(request, 'core/grado_form.html', {'form': form})
-
-@login_required
-@user_passes_test(is_admin)
-def grado_edit(request, pk):
-    grado = get_object_or_404(Grado, pk=pk)
-    if request.method == 'POST':
-        form = GradoForm(request.POST, instance=grado)
-        if form.is_valid():
-            form.save()
-            return redirect('grados_list')
-    else:
-        form = GradoForm(instance=grado)
-    return render(request, 'core/grado_form.html', {'form': form, 'grado': grado})
-
-@login_required
-@user_passes_test(is_admin)
-def grado_delete(request, pk):
-    grado = get_object_or_404(Grado, pk=pk)
-    if request.method == 'POST':
-        grado.delete()
-        return redirect('grados_list')
-    return render(request, 'core/grado_confirm_delete.html', {'grado': grado})
-
-# --- PAGOS ---
-@login_required
-@user_passes_test(is_admin)
-def pagos_list(request):
-    alumnos = Alumno.objects.all().order_by('nombre')
-    alumno_id = request.GET.get('alumno')
-    pagos = Pago.objects.select_related('alumno', 'forma_pago').order_by('-fecha')
-    if alumno_id:
-        pagos = pagos.filter(alumno_id=alumno_id)
-    return render(request, 'core/pagos_list.html', {'pagos': pagos, 'alumnos': alumnos, 'alumno_id': alumno_id})
-
-@login_required
-@user_passes_test(is_admin)
-def pago_create(request):
-    if request.method == 'POST':
-        form = PagoForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect('pagos_list')
-    else:
-        form = PagoForm(initial={'fecha': timezone.now().date()})
-    return render(request, 'core/pago_form.html', {'form': form})
 
 @login_required
 @user_passes_test(is_admin)
@@ -272,8 +299,12 @@ def index(request):
             geo_data = geo_resp.json()
             if geo_data.get('status') == 'success':
                 city = geo_data.get('city')
-        except requests.exceptions.RequestException:
+        except Exception:
             city = None
+ # --- (removed duplicate is_admin) ---
+
+
+# --- PARÁMETROS ---
     # Calcular total de deuda general
     from django.db.models import Sum
     total_consumos = Consumo.objects.aggregate(s=Sum('importe'))['s'] or 0
@@ -284,21 +315,31 @@ def index(request):
 def deuda_alumno(request, alumno_id):
     alumno = get_object_or_404(Alumno, pk=alumno_id)
     cuenta, _ = CuentaCorriente.objects.get_or_create(alumno=alumno)
-    texto = f"Hola {alumno.nombre}, tu deuda actual en el buffet escolar es de ${cuenta.saldo:.2f}."
+    from .models import Parametro
+    parametro = Parametro.objects.first()
+    if parametro and parametro.mensaje_whatsapp:
+        texto = parametro.mensaje_whatsapp.format(nombre=alumno.nombre, deuda=f"{cuenta.saldo:.2f}")
+    else:
+        texto = f"Hola {alumno.nombre}, tu deuda actual en el buffet escolar es de ${cuenta.saldo:.2f}."
     return render(request, "core/deuda_alumno.html", {"alumno": alumno, "cuenta": cuenta, "texto": texto})
 
 def deuda_general(request):
     cuentas_con_deuda = CuentaCorriente.objects.annotate(
         saldo_annotate=models.F('total_consumido') - models.F('total_pagado')
     ).filter(saldo_annotate__gt=0).select_related('alumno')
-
-    deudas = [
-        {
+    from .models import Parametro
+    parametro = Parametro.objects.first()
+    deudas = []
+    for c in cuentas_con_deuda:
+        if parametro and parametro.mensaje_whatsapp:
+            texto = parametro.mensaje_whatsapp.format(nombre=c.alumno.nombre, deuda=f"{c.saldo_annotate:.2f}")
+        else:
+            texto = f"Hola {c.alumno.nombre}, tu deuda actual en el buffet escolar es de ${c.saldo_annotate:.2f}."
+        deudas.append({
             "alumno": c.alumno,
             "saldo": c.saldo_annotate,
-            "texto": f"Hola {c.alumno.nombre}, tu deuda actual en el buffet escolar es de ${c.saldo_annotate:.2f}."
-        } for c in cuentas_con_deuda
-    ]
+            "texto": texto
+        })
     return render(request, "core/deuda_general.html", {"deudas": deudas})
 
 @login_required
