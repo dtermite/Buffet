@@ -1,0 +1,14 @@
+{% extends 'core/base.html' %}
+{% block content %}
+<h2>{{ accion }}</h2>
+<form method="post" class="card p-4 shadow-sm" style="max-width: 500px; margin:auto;">{% csrf_token %}
+    <div class="mb-3">
+        <label for="nombre" class="form-label">Nombre</label>
+        <input type="text" name="nombre" id="nombre" class="form-control" required value="{{ forma.nombre|default:'' }}">
+    </div>
+    <button type="submit" class="btn btn-success">Guardar</button>
+</form>
+<div class="text-center mt-3">
+    <a href="/formas_pago/" class="btn btn-secondary">Volver a la lista</a>
+</div>
+{% endblock %}

@@ -1,0 +1,14 @@
+{% extends 'core/base.html' %}
+{% block content %}
+<h2>{% if grado %}Editar Grado{% else %}Nuevo Grado{% endif %}</h2>
+<form method="post" class="card p-4 shadow-sm" style="max-width: 400px; margin:auto;">{% csrf_token %}
+    <div class="mb-3">
+        <label for="nombre" class="form-label">Nombre</label>
+        <input type="text" name="nombre" id="nombre" class="form-control" required value="{{ grado.nombre|default:'' }}">
+    </div>
+    <button type="submit" class="btn btn-success">Guardar</button>
+</form>
+<div class="text-center mt-3">
+    <a href="{% url 'grados_list' %}" class="btn btn-secondary">Volver a la lista</a>
+</div>
+{% endblock %}

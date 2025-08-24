@@ -1,0 +1,17 @@
+{% extends 'core/base.html' %}
+{% block content %}
+<h2>Eliminar Pago</h2>
+<p>¿Estás seguro que deseas eliminar este pago?</p>
+<ul>
+    <li><strong>Alumno:</strong> {{ pago.alumno }}</li>
+    <li><strong>Forma de Pago:</strong> {{ pago.forma_pago }}</li>
+    <li><strong>Importe:</strong> ${{ pago.importe }}</li>
+    <li><strong>Fecha:</strong> {{ pago.fecha }}</li>
+    <!-- <li><strong>Hora:</strong> {{ pago.hora }}</li> -->
+</ul>
+<form method="post">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger">Eliminar</button>
+    <a href="{% url 'pagos_list' %}" class="btn btn-secondary">Cancelar</a>
+</form>
+{% endblock %}

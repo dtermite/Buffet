@@ -1,0 +1,8 @@
+{% extends 'core/base.html' %}
+{% block content %}
+<h2>Editar consumo</h2>
+<form method="post" class="card p-4 shadow-sm" style="max-width: 500px; margin:auto;">{% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-success">Guardar</button>
+</form>
+{% endblock %}

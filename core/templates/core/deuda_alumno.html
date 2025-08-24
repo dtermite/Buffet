@@ -1,0 +1,16 @@
+{% extends 'core/base.html' %}
+{% block content %}
+<div class="card p-4 shadow-sm" style="max-width: 600px; margin:auto;">
+	<h2>Deuda de {{ alumno.nombre }}</h2>
+	<p><b>Grado:</b> {{ alumno.grado }}</p>
+	<p><b>WhatsApp:</b> {{ alumno.whatsapp }}</p>
+	<p><b>Saldo actual:</b> ${{ cuenta.saldo }}</p>
+	<label class="form-label"><b>Texto para WhatsApp:</b></label>
+	<textarea class="form-control mb-3" rows="3">{{ texto }}</textarea>
+		{% with numero=alumno.whatsapp|cut:' '|cut:'-'|cut:'('|cut:')'|cut:'+' %}
+		<a href="https://wa.me/549{{ numero }}?text={{ texto|urlencode }}" target="_blank" class="btn btn-success">
+				Enviar por WhatsApp
+		</a>
+		{% endwith %}
+</div>
+{% endblock %}

@@ -1,0 +1,31 @@
+# Django
+*.log
+*.pot
+*.pyc
+__pycache__/
+db.sqlite3
+media/
+staticfiles/
+.env
+*.sqlite3
+*.py[cod]
+*.pyo
+*.db
+*.swp
+*.swo
+*.bak
+*.tmp
+.DS_Store
+.vscode/
+.idea/
+.env*/
+.venv/
+venv/
+.envrc
+node_modules/
+# MySQL dumps
+*.sql
+# VSCode settings
+.vscode/
+# Windows
+Thumbs.db

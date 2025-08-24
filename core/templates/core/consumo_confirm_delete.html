@@ -1,0 +1,11 @@
+{% extends 'core/base.html' %}
+{% block content %}
+<div class="card p-4 shadow-sm" style="max-width: 500px; margin:auto;">
+  <h2>Eliminar consumo</h2>
+  <p>¿Seguro que deseas eliminar el consumo de <b>{{ consumo.alumno.nombre }}</b> del día <b>{{ consumo.fecha }}</b>?</p>
+  <form method="post">{% csrf_token %}
+    <button type="submit" class="btn btn-danger">Eliminar</button>
+    <a href="/consumos/" class="btn btn-secondary">Cancelar</a>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,9 @@
+{% extends 'core/base.html' %}
+{% block content %}
+<h2>Eliminar Grado</h2>
+<form method="post">{% csrf_token %}
+    <p>¿Está seguro que desea eliminar el grado <strong>{{ grado.nombre }}</strong>?</p>
+    <button type="submit" class="btn btn-danger">Eliminar</button>
+    <a href="{% url 'grados_list' %}" class="btn btn-secondary">Cancelar</a>
+</form>
+{% endblock %}

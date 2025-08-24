@@ -1,0 +1,20 @@
+{% extends 'core/base.html' %}
+{% block content %}
+<h2 class="mb-4">Deuda general de alumnos</h2>
+<div class="row">
+{% for d in deudas %}
+    <div class="col-md-6 mb-4">
+        <div class="card p-3 shadow-sm">
+            <h5>{{ d.alumno.nombre }} <span class="text-muted">({{ d.alumno.grado }})</span></h5>
+            <p><b>Saldo:</b> ${{ d.saldo }}</p>
+            <textarea class="form-control mb-2" rows="2">{{ d.texto }}</textarea>
+                    {% with numero=d.alumno.whatsapp|cut:' '|cut:'-'|cut:'('|cut:')'|cut:'+' %}
+                    <a href="https://wa.me/549{{ numero }}?text={{ d.texto|urlencode }}" target="_blank" class="btn btn-success btn-sm">
+                        Enviar por WhatsApp
+                    </a>
+                    {% endwith %}
+        </div>
+    </div>
+{% endfor %}
+</div>
+{% endblock %}
