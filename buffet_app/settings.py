@@ -129,3 +129,12 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Configuración de email para recuperación de contraseña
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'diegotermite@gmail.com'  # Cambia esto por tu email
+EMAIL_HOST_PASSWORD = 'ubyl uacd okwq rzwf'  # Cambia esto por tu contraseña de aplicación
+DEFAULT_FROM_EMAIL = 'Sistema Kiosco <diegotermite@gmail.com>'
