@@ -78,10 +78,26 @@ class FormaPagoForm(forms.ModelForm):
         model = FormaPago
         fields = ['nombre']
 
-class RegistrarConsumoForm(forms.Form):
-    alumno = forms.ModelChoiceField(queryset=Alumno.objects.all().order_by('nombre'))
-    detalle = forms.CharField(widget=forms.Textarea(attrs={'rows': 3}))
-    importe = forms.DecimalField(max_digits=10, decimal_places=2)
+from .models import Consumo
+
+from django.utils import timezone
+
+class RegistrarConsumoForm(forms.ModelForm):
+    class Meta:
+        model = Consumo
+        fields = ['alumno', 'detalle', 'importe']
+        widgets = {
+            'detalle': forms.Textarea(attrs={'rows': 3}),
+        }
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        now = timezone.now()
+        instance.fecha = now.date()
+        instance.hora = now.time()
+        if commit:
+            instance.save()
+        return instance
 
 class RegistrarPagoForm(forms.Form):
     alumno = forms.ModelChoiceField(queryset=Alumno.objects.all().order_by('nombre'))
