@@ -1,0 +1,21 @@
+[Unit]
+Description=Buffet School Management System
+After=network.target
+After=mysql.service
+Requires=mysql.service
+
+[Service]
+Type=notify
+User=www-data
+Group=www-data
+RuntimeDirectory=buffet
+WorkingDirectory=/opt/buffet
+Environment=DJANGO_SETTINGS_MODULE=buffet_app.settings_production
+EnvironmentFile=/opt/buffet/.env
+ExecStart=/opt/buffet/venv/bin/gunicorn buffet_app.wsgi:application --bind unix:/run/buffet/buffet.sock --workers 3 --timeout 300
+ExecReload=/bin/kill -s HUP $MAINPID
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
