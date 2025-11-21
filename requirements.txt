@@ -1,0 +1,18 @@
+# Core Django dependencies
+Django==5.2.6
+mysqlclient==2.2.7
+
+# Production server
+gunicorn==23.0.0
+
+# Environment variables management
+python-decouple==3.8
+
+# Static files for production (optional but recommended)
+whitenoise==6.11.0
+
+# Excel functionality
+openpyxl==3.1.5
+
+# HTTP requests (if needed for integrations)
+requests==2.31.0
