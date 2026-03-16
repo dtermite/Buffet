@@ -1,10 +1,13 @@
 from django import forms
-from .models import Alumno, Consumo, FormaPago, Pago, Grado
+from django.utils import timezone
+from .models import Alumno, Consumo, FormaPago, Pago, Grado, Parametro
+
 
 class GradoForm(forms.ModelForm):
     class Meta:
         model = Grado
         fields = ['nombre']
+
 
 class AlumnoForm(forms.ModelForm):
     class Meta:
@@ -15,8 +18,6 @@ class AlumnoForm(forms.ModelForm):
         }
 
 
-# NUEVO PagoForm desde cero
-from django.utils import timezone
 class PagoForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -26,7 +27,11 @@ class PagoForm(forms.ModelForm):
             self.fields['alumno'].queryset = Alumno.objects.filter(pk=self.instance.alumno.pk)
             self.fields['alumno'].disabled = True
         else:
-            alumnos_con_deuda = [c.alumno.pk for c in CuentaCorriente.objects.select_related('alumno') if c.saldo > 0]
+            alumnos_con_deuda = [
+                c.alumno.pk
+                for c in CuentaCorriente.objects.select_related('alumno')
+                if c.saldo > 0
+            ]
             self.fields['alumno'].queryset = Alumno.objects.filter(pk__in=alumnos_con_deuda).order_by('nombre')
         self.fields['forma_pago'].queryset = FormaPago.objects.all().order_by('nombre')
         self.fields['fecha'].initial = timezone.now().date()
@@ -40,7 +45,7 @@ class PagoForm(forms.ModelForm):
         alumno = self.instance.alumno if self.instance and self.instance.pk else cleaned_data.get('alumno')
         importe = cleaned_data.get('importe')
         if alumno and importe is not None:
-            from .models import CuentaCorriente, Pago
+            from .models import CuentaCorriente
             cuenta = CuentaCorriente.objects.get(alumno=alumno)
             deuda = cuenta.saldo
             if self.instance and self.instance.pk:
@@ -54,14 +59,15 @@ class PagoForm(forms.ModelForm):
         model = Pago
         fields = ['alumno', 'forma_pago', 'importe', 'fecha']
 
+
 class ConsumoForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['alumno'].queryset = Alumno.objects.all().order_by('nombre')
-        from django.utils import timezone
         if not self.instance.pk:
             self.fields['fecha'].initial = timezone.now().date()
             self.fields['hora'].initial = timezone.now().time().strftime('%H:%M')
+
     class Meta:
         model = Consumo
         fields = ['fecha', 'hora', 'alumno', 'detalle', 'importe']
@@ -73,14 +79,12 @@ class ConsumoForm(forms.ModelForm):
             'importe': forms.NumberInput(attrs={'step': '0.01', 'class': 'form-control'}),
         }
 
+
 class FormaPagoForm(forms.ModelForm):
     class Meta:
         model = FormaPago
         fields = ['nombre']
 
-from .models import Consumo
-
-from django.utils import timezone
 
 class RegistrarConsumoForm(forms.ModelForm):
     class Meta:
@@ -99,7 +103,41 @@ class RegistrarConsumoForm(forms.ModelForm):
             instance.save()
         return instance
 
-class RegistrarPagoForm(forms.Form):
-    alumno = forms.ModelChoiceField(queryset=Alumno.objects.all().order_by('nombre'))
-    forma_pago = forms.ModelChoiceField(queryset=FormaPago.objects.all().order_by('nombre'))
-    importe = forms.DecimalField(max_digits=10, decimal_places=2)
+
+class RegistrarPagoForm(forms.ModelForm):
+    """
+    Formulario rápido para registrar un pago.
+    Asigna la fecha actual automáticamente al guardar.
+    """
+    class Meta:
+        model = Pago
+        fields = ['alumno', 'forma_pago', 'importe']
+        widgets = {
+            'alumno': forms.Select(attrs={'class': 'form-control'}),
+            'forma_pago': forms.Select(attrs={'class': 'form-control'}),
+            'importe': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['alumno'].queryset = Alumno.objects.all().order_by('nombre')
+        self.fields['forma_pago'].queryset = FormaPago.objects.all().order_by('nombre')
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        instance.fecha = timezone.now().date()
+        if commit:
+            instance.save()
+        return instance
+
+
+class ParametroForm(forms.ModelForm):
+    class Meta:
+        model = Parametro
+        fields = ['mensaje_whatsapp']
+        widgets = {
+            'mensaje_whatsapp': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
+        }
+        labels = {
+            'mensaje_whatsapp': 'Texto base para WhatsApp',
+        }

@@ -1,13 +1,3 @@
-from django import forms
-from .models import Parametro
-
-class ParametroForm(forms.ModelForm):
-    class Meta:
-        model = Parametro
-        fields = ['mensaje_whatsapp']
-        widgets = {
-            'mensaje_whatsapp': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
-        }
-        labels = {
-            'mensaje_whatsapp': 'Texto base para WhatsApp',
-        }
+# Este módulo fue consolidado en forms.py.
+# Se mantiene por compatibilidad retroactiva.
+from .forms import ParametroForm  # noqa: F401

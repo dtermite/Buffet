@@ -1,5 +1,3 @@
-
-
 from django.urls import path
 from . import views
 from django.contrib.auth import views as auth_views
@@ -9,16 +7,25 @@ urlpatterns = [
     path('consumos/', views.consumos_list, name='consumos_list'),
     path('consumos/<int:pk>/editar/', views.consumo_edit, name='consumo_edit'),
     path('consumos/<int:pk>/eliminar/', views.consumo_delete, name='consumo_delete'),
+
+    # Auth
     path('login/', auth_views.LoginView.as_view(template_name='core/login.html'), name='login'),
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
+
     # Password reset
     path('password_reset/', auth_views.PasswordResetView.as_view(template_name='core/password_reset_form.html'), name='password_reset'),
     path('password_reset/done/', auth_views.PasswordResetDoneView.as_view(template_name='core/password_reset_done.html'), name='password_reset_done'),
     path('reset/<uidb64>/<token>/', auth_views.PasswordResetConfirmView.as_view(template_name='core/password_reset_confirm.html'), name='password_reset_confirm'),
     path('reset/done/', auth_views.PasswordResetCompleteView.as_view(template_name='core/password_reset_complete.html'), name='password_reset_complete'),
+
+    # Dashboard
     path('', views.index, name='index'),
+
+    # Deuda
     path('deuda/<int:alumno_id>/', views.deuda_alumno, name='deuda_alumno'),
     path('deuda/', views.deuda_general, name='deuda_general'),
+
+    # Operaciones rápidas
     path('registrar_consumo/', views.registrar_consumo, name='registrar_consumo'),
     path('registrar_pago/', views.registrar_pago, name='registrar_pago'),
 
@@ -37,6 +44,7 @@ urlpatterns = [
     path('formas_pago/', views.formas_pago_list, name='formas_pago_list'),
     path('formas_pago/nuevo/', views.forma_pago_create, name='forma_pago_create'),
     path('formas_pago/<int:pk>/editar/', views.forma_pago_edit, name='forma_pago_edit'),
+
     # Pagos
     path('pagos/', views.pagos_list, name='pagos_list'),
     path('pagos/nuevo/', views.pago_create, name='pago_create'),
@@ -46,7 +54,6 @@ urlpatterns = [
     # Cuentas Corrientes
     path('cuentas_corrientes/', views.cuentas_corrientes, name='cuentas_corrientes'),
     path('cuentas_corrientes/exportar/', views.exportar_cuentas_corrientes_excel, name='exportar_cuentas_corrientes_excel'),
-    path('cuentas_corrientes/exportar_excel/', views.exportar_cuentas_corrientes_excel, name='exportar_cuentas_corrientes_excel_alias'),
 
     # Parámetros
     path('parametros/', views.parametros_edit, name='parametros_edit'),
